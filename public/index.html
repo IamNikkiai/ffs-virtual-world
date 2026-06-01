@@ -925,7 +925,8 @@
       if (
         sidebar.classList.contains('open') &&
         !sidebar.contains(e.target) &&
-        !e.target.closest('.hotspot')
+        !e.target.closest('.hotspot') &&
+        !e.target.closest('.mobile-card')
       ) {
         closeSidebar();
       }
@@ -1054,6 +1055,7 @@
       grid.addEventListener('click', function(e) {
         const card = e.target.closest('.mobile-card');
         if (!card) return;
+        e.stopPropagation(); // prevent bubbling to document outside-click handler
         const idx = parseInt(card.dataset.hsIndex, 10);
         const hs = HOTSPOTS[idx];
         if (hs) handleHotspotClick(hs);
@@ -1061,4 +1063,5 @@
     }
 
     buildMobileGrid();
-    </script>
+    
+  </script>
