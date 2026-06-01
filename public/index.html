@@ -479,7 +479,7 @@
 
   <!-- â”€â”€ Sidebar â”€â”€ -->
   <aside id="sidebar">
-    <button id="sidebar-close" aria-label="Close">âœ•</button>
+    <button id="sidebar-close" aria-label="Close">&#x2715;</button>
     <p id="sidebar-category"></p>
     <h2 id="sidebar-title"></h2>
     <span id="sidebar-tag">DFY Production</span>
@@ -492,7 +492,7 @@
   <!-- â”€â”€ Modal â”€â”€ -->
   <div id="modal-overlay" role="dialog" aria-modal="true">
     <div id="modal-card" data-state="idle">
-      <button id="modal-close" aria-label="Close">âœ•</button>
+      <button id="modal-close" aria-label="Close">&#x2715;</button>
 
       <!-- State 1: Form -->
       <div id="modal-form">
@@ -638,7 +638,15 @@
         url: "https://fullframesociety.com/free/library-was-the-problem",
         cta: "Download Free",
         ghlTag: "ffs-world-library-optin"
-      }
+      },
+  {
+    cat: "Visit Full Frame Society",
+    title: "Full Frame Society",
+    tag: "link", tagLabel: "Website",
+    desc: "",
+    url: "https://fullframesociety.com/",
+    cta: "Visit Site"
+  }
     ];
 
     // â”€â”€ Positions & Prices (map coordinates, order matches DATA) â”€â”€
@@ -655,7 +663,8 @@
       { left: '10%', top: '72%', price: 'Free' },
       { left: '85%', top: '70%', price: 'Free call' },
       { left: '6%',  top: '44%', price: '$97' },
-      { left: '90%', top: '38%', price: 'Free' }
+      { left: '90%', top: '38%', price: 'Free' },
+      { left: '38%', top: '37%', price: '' }
     ];
 
     // Merge DATA + POSITIONS into final HOTSPOTS array
@@ -668,11 +677,38 @@
     // â”€â”€ Build Hotspots â”€â”€
     const world = document.getElementById('world');
 
+    // Calculate actual rendered image bounds (accounts for object-fit: cover)
+    function getImageBounds() {
+      const bg = document.getElementById('bg');
+      const cw = bg.offsetWidth, ch = bg.offsetHeight;
+      const nw = bg.naturalWidth, nh = bg.naturalHeight;
+      if (!nw || !nh) return null;
+      const containerRatio = cw / ch;
+      const imageRatio = nw / nh;
+      let rw, rh;
+      if (containerRatio > imageRatio) { rw = cw; rh = cw / imageRatio; }
+      else { rh = ch; rw = ch * imageRatio; }
+      return { rw, rh, ox: (cw - rw) / 2, oy: (ch - rh) / 2 };
+    }
+
+    function positionHotspots() {
+      const bounds = getImageBounds();
+      if (!bounds) return;
+      document.querySelectorAll('.hotspot').forEach(el => {
+        const lp = parseFloat(el.dataset.leftPct);
+        const tp = parseFloat(el.dataset.topPct);
+        el.style.left = (bounds.ox + (lp / 100) * bounds.rw) + 'px';
+        el.style.top  = (bounds.oy + (tp / 100) * bounds.rh) + 'px';
+      });
+    }
+
+    window.addEventListener('resize', positionHotspots);
+
     HOTSPOTS.forEach(hs => {
       const el = document.createElement('div');
       el.className = 'hotspot';
-      el.style.left = hs.left;
-      el.style.top = hs.top;
+      el.dataset.leftPct = parseFloat(hs.left);
+      el.dataset.topPct  = parseFloat(hs.top);
       el.dataset.id = hs.id;
 
       const flipBelow = parseFloat(hs.top) > 65;
@@ -688,6 +724,14 @@
       el.addEventListener('click', () => handleHotspotClick(hs));
       world.appendChild(el);
     });
+
+    // Position hotspots once image dimensions are known
+    const bgImg = document.getElementById('bg');
+    if (bgImg.complete && bgImg.naturalWidth) {
+      positionHotspots();
+    } else {
+      bgImg.addEventListener('load', positionHotspots);
+    }
 
     // â”€â”€ Sidebar Elements â”€â”€
     const sidebar         = document.getElementById('sidebar');
@@ -714,7 +758,9 @@
 
     // â”€â”€ Hotspot Click Handler â”€â”€
     function handleHotspotClick(hs) {
-      if (hs.tag === 'free') {
+      if (hs.tag === 'link') {
+        window.open(hs.url, '_blank', 'noopener,noreferrer');
+      } else if (hs.tag === 'free') {
         openModal(hs);
       } else {
         openSidebar(hs);
