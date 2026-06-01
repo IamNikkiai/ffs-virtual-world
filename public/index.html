@@ -515,6 +515,17 @@
         gap: 6px;
         transition: border-color 0.2s, background 0.2s;
         -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        pointer-events: auto;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+
+      /* Children must not intercept taps — let them bubble to the card */
+      .mobile-card .card-cat,
+      .mobile-card .card-title,
+      .mobile-card .card-badge {
+        pointer-events: none;
       }
 
       .mobile-card:active {
@@ -1026,15 +1037,26 @@
       const grid = document.getElementById('mobile-grid');
       if (!grid) return;
       grid.innerHTML = '';
-      HOTSPOTS.forEach(hs => {
+
+      // Build cards with data-index so delegation can look up the hotspot
+      HOTSPOTS.forEach((hs, i) => {
         const card = document.createElement('div');
         card.className = 'mobile-card';
+        card.dataset.hsIndex = i;
         card.innerHTML =
           '<span class="card-cat">' + hs.cat + '</span>' +
           '<span class="card-title">' + hs.title + '</span>' +
           '<span class="card-badge">' + hs.tagLabel + '</span>';
-        card.addEventListener('click', () => handleHotspotClick(hs));
         grid.appendChild(card);
+      });
+
+      // Single delegated listener — handles taps on card OR any child element
+      grid.addEventListener('click', function(e) {
+        const card = e.target.closest('.mobile-card');
+        if (!card) return;
+        const idx = parseInt(card.dataset.hsIndex, 10);
+        const hs = HOTSPOTS[idx];
+        if (hs) handleHotspotClick(hs);
       });
     }
 
